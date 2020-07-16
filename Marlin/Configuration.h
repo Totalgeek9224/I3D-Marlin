@@ -71,7 +71,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "(Zach for Invent3D" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "(Joe for Invent3D" // Who made the changes.
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
 /**
@@ -636,9 +636,9 @@
 // Almost all printers will be using one per axis. Probes will use one or more of the
 // extra connectors. Leave undefined any used for non-endstop and non-probe purposes.
 #define USE_XMIN_PLUG
-//#define USE_YMIN_PLUG
+#define USE_YMIN_PLUG
 #define USE_ZMIN_PLUG
-//#define USE_XMAX_PLUG
+#define USE_XMAX_PLUG
 #define USE_YMAX_PLUG
 //#define USE_ZMAX_PLUG
 
@@ -670,10 +670,10 @@
 
 // Mechanical endstop with COM to ground and NC to Signal uses "false" here (most common setup).
 #define X_MIN_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
-#define Y_MIN_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
+#define Y_MIN_ENDSTOP_INVERTING false// Set to true to invert the logic of the endstop.
 #define Z_MIN_ENDSTOP_INVERTING true // Set to true to invert the logic of the endstop.
-#define X_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
-#define Y_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
+#define X_MAX_ENDSTOP_INVERTING true // Set to true to invert the logic of the endstop.
+#define Y_MAX_ENDSTOP_INVERTING true // Set to true to invert the logic of the endstop.
 #define Z_MAX_ENDSTOP_INVERTING false // Set to true to invert the logic of the endstop.
 #define Z_MIN_PROBE_ENDSTOP_INVERTING true // Set to true to invert the logic of the probe.
 
@@ -1118,7 +1118,7 @@
 
 // Direction of endstops when homing; 1=MAX, -1=MIN
 // :[-1,1]
-#define X_HOME_DIR -1
+#define X_HOME_DIR 1
 #define Y_HOME_DIR 1
 #define Z_HOME_DIR -1
 
@@ -1376,7 +1376,7 @@
 // Manually set the home position. Leave these undefined for automatic settings.
 // For DELTA this is the top-center of the Cartesian print volume.
 //#define MANUAL_X_HOME_POS 0
-#define MANUAL_Y_HOME_POS 220
+//#define MANUAL_Y_HOME_POS 0
 //#define MANUAL_Z_HOME_POS 0
 
 // Use "Z Safe Homing" to avoid homing with a Z probe outside the bed area.
