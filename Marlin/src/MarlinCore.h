@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
@@ -40,17 +40,11 @@ void stop();
 
 void idle(
   #if ENABLED(ADVANCED_PAUSE_FEATURE)
-    bool no_stepper_sleep=false    // Pass true to keep steppers from timing out
+    bool no_stepper_sleep = false  // pass true to keep steppers from disabling on timeout
   #endif
 );
 
-inline void idle_no_sleep() {
-  idle(
-    #if ENABLED(ADVANCED_PAUSE_FEATURE)
-      true
-    #endif
-  );
-}
+void manage_inactivity(const bool ignore_stepper_queue=false);
 
 #if ENABLED(EXPERIMENTAL_I2CBUS)
   #include "feature/twibus.h"
@@ -76,20 +70,9 @@ void minkill(const bool steppers_off=false);
 
 void quickstop_stepper();
 
-// Global State of the firmware
-enum MarlinState : uint8_t {
-  MF_INITIALIZING =  0,
-  MF_RUNNING      = _BV(0),
-  MF_PAUSED       = _BV(1),
-  MF_WAITING      = _BV(2),
-  MF_STOPPED      = _BV(3),
-  MF_SD_COMPLETE  = _BV(4),
-  MF_KILLED       = _BV(7)
-};
-
-extern MarlinState marlin_state;
-inline bool IsRunning() { return marlin_state == MF_RUNNING; }
-inline bool IsStopped() { return marlin_state != MF_RUNNING; }
+extern bool Running;
+inline bool IsRunning() { return  Running; }
+inline bool IsStopped() { return !Running; }
 
 bool printingIsActive();
 bool printingIsPaused();
@@ -99,7 +82,10 @@ extern bool wait_for_heatup;
 
 #if HAS_RESUME_CONTINUE
   extern bool wait_for_user;
-  void wait_for_user_response(millis_t ms=0, const bool no_sleep=false);
+#endif
+
+#if HAS_AUTO_REPORTING || ENABLED(HOST_KEEPALIVE_FEATURE)
+  extern bool suspend_auto_report;
 #endif
 
 // Inactivity shutdown timer
@@ -135,6 +121,4 @@ void protected_pin_err();
 #endif
 
 extern const char NUL_STR[], M112_KILL_STR[], G28_STR[], M21_STR[], M23_STR[], M24_STR[],
-                  SP_P_STR[], SP_T_STR[], SP_X_STR[], SP_Y_STR[], SP_Z_STR[], SP_E_STR[],
-                  X_LBL[], Y_LBL[], Z_LBL[], E_LBL[], SP_X_LBL[], SP_Y_LBL[], SP_Z_LBL[], SP_E_LBL[];
-
+                  SP_X_STR[], SP_Y_STR[], SP_Z_STR[], SP_E_STR[];

@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
@@ -54,7 +54,7 @@ Nozzle nozzle;
     #endif
 
     // Start the stroke pattern
-    LOOP_L_N(i, strokes >> 1) {
+    for (uint8_t i = 0; i < (strokes >> 1); i++) {
       do_blocking_move_to_xy(end);
       do_blocking_move_to_xy(start);
     }
@@ -91,7 +91,7 @@ Nozzle nozzle;
     const bool horiz = ABS(diff.x) >= ABS(diff.y);    // Do a horizontal wipe?
     const float P = (horiz ? diff.x : diff.y) / zigs; // Period of each zig / zag
     const xyz_pos_t *side;
-    LOOP_L_N(j, strokes) {
+    for (uint8_t j = 0; j < strokes; j++) {
       for (int8_t i = 0; i < zigs; i++) {
         side = (i & 1) ? &end : &start;
         if (horiz)
@@ -134,8 +134,8 @@ Nozzle nozzle;
       do_blocking_move_to(start);
     #endif
 
-    LOOP_L_N(s, strokes)
-      LOOP_L_N(i, NOZZLE_CLEAN_CIRCLE_FN)
+    for (uint8_t s = 0; s < strokes; s++)
+      for (uint8_t i = 0; i < NOZZLE_CLEAN_CIRCLE_FN; i++)
         do_blocking_move_to_xy(
           middle.x + sin((RADIANS(360) / NOZZLE_CLEAN_CIRCLE_FN) * i) * radius,
           middle.y + cos((RADIANS(360) / NOZZLE_CLEAN_CIRCLE_FN) * i) * radius

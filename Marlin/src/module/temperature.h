@@ -1,6 +1,6 @@
 /**
  * Marlin 3D Printer Firmware
- * Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ * Copyright (c) 2019 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
  *
  * Based on Sprinter and grbl.
  * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
@@ -74,6 +74,8 @@ hotend_pid_t;
   typedef IF<(LPQ_MAX_LEN > 255), uint16_t, uint8_t>::type lpq_ptr_t;
 #endif
 
+#define DUMMY_PID_VALUE 3000.0f
+
 #if ENABLED(PIDTEMP)
   #define _PID_Kp(H) Temperature::temp_hotend[H].pid.Kp
   #define _PID_Ki(H) Temperature::temp_hotend[H].pid.Ki
@@ -90,9 +92,9 @@ hotend_pid_t;
     #define _PID_Kf(H) 0
   #endif
 #else
-  #define _PID_Kp(H) NAN
-  #define _PID_Ki(H) NAN
-  #define _PID_Kd(H) NAN
+  #define _PID_Kp(H) DUMMY_PID_VALUE
+  #define _PID_Ki(H) DUMMY_PID_VALUE
+  #define _PID_Kd(H) DUMMY_PID_VALUE
   #define _PID_Kc(H) 1
 #endif
 
@@ -226,38 +228,15 @@ typedef struct {
   inline void start(const millis_t &ms) { timeout_ms = millis() + ms; timed_out = false; }
   inline void reset() { timeout_ms = 0; timed_out = false; }
   inline void expire() { start(0); }
-} hotend_idle_t;
+} heater_idle_t;
 
 // Heater watch handling
-template <int INCREASE, int HYSTERESIS, millis_t PERIOD>
-struct HeaterWatch {
+typedef struct {
   uint16_t target;
   millis_t next_ms;
   inline bool elapsed(const millis_t &ms) { return next_ms && ELAPSED(ms, next_ms); }
   inline bool elapsed() { return elapsed(millis()); }
-
-  inline void restart(const int16_t curr, const int16_t tgt) {
-    if (tgt) {
-      const int16_t newtarget = curr + INCREASE;
-      if (newtarget < tgt - HYSTERESIS - 1) {
-        target = newtarget;
-        next_ms = millis() + PERIOD * 1000UL;
-        return;
-      }
-    }
-    next_ms = 0;
-  }
-};
-
-#if WATCH_HOTENDS
-  typedef struct HeaterWatch<WATCH_TEMP_INCREASE, TEMP_HYSTERESIS, WATCH_TEMP_PERIOD> hotend_watch_t;
-#endif
-#if WATCH_BED
-  typedef struct HeaterWatch<WATCH_BED_TEMP_INCREASE, TEMP_BED_HYSTERESIS, WATCH_BED_TEMP_PERIOD> bed_watch_t;
-#endif
-#if WATCH_CHAMBER
-  typedef struct HeaterWatch<WATCH_CHAMBER_TEMP_INCREASE, TEMP_CHAMBER_HYSTERESIS, WATCH_CHAMBER_TEMP_PERIOD> chamber_watch_t;
-#endif
+} heater_watch_t;
 
 // Temperature sensor read value ranges
 typedef struct { int16_t raw_min, raw_max; } raw_range_t;
@@ -366,12 +345,12 @@ class Temperature {
     FORCE_INLINE static bool targetHotEnoughToExtrude(const uint8_t e) { return !targetTooColdToExtrude(e); }
 
     #if HEATER_IDLE_HANDLER
-      static hotend_idle_t hotend_idle[HOTENDS];
+      static heater_idle_t hotend_idle[HOTENDS];
       #if HAS_HEATED_BED
-        static hotend_idle_t bed_idle;
+        static heater_idle_t bed_idle;
       #endif
       #if HAS_HEATED_CHAMBER
-        static hotend_idle_t chamber_idle;
+        static heater_idle_t chamber_idle;
       #endif
     #endif
 
@@ -384,7 +363,7 @@ class Temperature {
     static volatile bool raw_temps_ready;
 
     #if WATCH_HOTENDS
-      static hotend_watch_t watch_hotend[HOTENDS];
+      static heater_watch_t watch_hotend[HOTENDS];
     #endif
 
     #if ENABLED(TEMP_SENSOR_1_AS_REDUNDANT)
@@ -403,7 +382,7 @@ class Temperature {
 
     #if HAS_HEATED_BED
       #if WATCH_BED
-        static bed_watch_t watch_bed;
+        static heater_watch_t watch_bed;
       #endif
       #if DISABLED(PIDTEMPBED)
         static millis_t next_bed_check_ms;
@@ -418,7 +397,7 @@ class Temperature {
 
     #if HAS_HEATED_CHAMBER
       #if WATCH_CHAMBER
-        static chamber_watch_t watch_chamber;
+        static heater_watch_t watch_chamber;
       #endif
       static millis_t next_chamber_check_ms;
       #ifdef CHAMBER_MINTEMP
@@ -699,8 +678,6 @@ class Temperature {
         #endif
       );
 
-      static void wait_for_bed_heating();
-
     #endif // HAS_HEATED_BED
 
     #if HAS_TEMP_PROBE
@@ -759,14 +736,6 @@ class Temperature {
      */
     static void disable_all_heaters();
 
-    #if ENABLED(PRINTJOB_TIMER_AUTOSTART)
-      /**
-       * Methods to check if heaters are enabled, indicating an active job
-       */
-      static bool over_autostart_threshold();
-      static void check_timer_autostart(const bool can_start, const bool can_stop);
-    #endif
-
     /**
      * Perform auto-tuning for hotend or bed in response to M303
      */
@@ -799,7 +768,7 @@ class Temperature {
 
     #if HEATER_IDLE_HANDLER
 
-      static void reset_hotend_idle_timer(const uint8_t E_NAME) {
+      static void reset_heater_idle_timer(const uint8_t E_NAME) {
         hotend_idle[HOTEND_INDEX].reset();
         start_watching_hotend(HOTEND_INDEX);
       }
